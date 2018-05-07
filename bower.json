@@ -1,0 +1,24 @@
+{
+  "license": "AGPL-3.0",
+  "name": "purescript-vnm-utility",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output",
+    "result"
+  ],
+  "dependencies": {
+    "purescript-indexed-nonempty": "^0.1.0",
+    "purescript-intervals": "^0.0.1",
+    "purescript-prelude": "^3.3.0",
+    "purescript-sets": "^3.2.0"
+  },
+  "devDependencies": {
+    "purescript-psci-support": "^3.0.0"
+  },
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/colehaus/purescript-vnm-utility.git"
+  }
+}
