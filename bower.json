@@ -10,7 +10,7 @@
   ],
   "dependencies": {
     "purescript-indexed-nonempty": "^0.1.0",
-    "purescript-intervals": "^0.0.1",
+    "purescript-intervals": "^2.0.0",
     "purescript-prelude": "^3.3.0",
     "purescript-sets": "^3.2.0"
   },

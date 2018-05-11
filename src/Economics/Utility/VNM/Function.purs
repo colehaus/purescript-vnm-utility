@@ -15,9 +15,9 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
 import Math.Interval ((<=!), (>=!))
-import Math.Interval as Interval
-import Math.Interval.Bound (Bound(..))
-import Math.Interval.Internal (Interval(..))
+import Math.Interval (singleton) as Interval
+import Math.Interval.Bound (Finite(MkFinite), PosInf(MkPosInf), lower, upper)
+import Math.Interval.Internal (NonEmpty(MkNonEmpty)) as Interval
 import Math.Interval.Openness (Openness(..))
 import Partial.Unsafe (unsafeCrashWith)
 
@@ -25,7 +25,7 @@ import Economics.Utility.Ratio (Pair(..), Ratio(..))
 import Economics.Utility.VNM.Helpers (nonEmptyMap, pairCombos, unsafeFromJustBecause)
 
 
-newtype UtilityFn a n = MkUtilityFn (Map (Pair a) (Interval n))
+newtype UtilityFn a n = MkUtilityFn (Map (Pair a) (Interval.NonEmpty n))
 derive newtype instance showUtilityFn :: (Generic a, Generic n) => Show (UtilityFn a n)
 
 
@@ -42,7 +42,7 @@ unmake ::
      forall n a.
      Ord a
   => Ord n
-  => UtilityFn a n -> Indexed.NonEmpty Map (Pair a) (Interval n)
+  => UtilityFn a n -> Indexed.NonEmpty Map (Pair a) (Interval.NonEmpty n)
 unmake (MkUtilityFn m) =
   unsafeFromJustBecause "We should never have an empty set of pairs" <<<
   nonEmptyMap $
@@ -69,14 +69,19 @@ goodsToInitialFn set
     set
       where
         positive
-          = NonEmpty
-          { lower: Finite { bound: zero, openness: Open }
-          , upper: PosInf
+          = Interval.MkNonEmpty
+          { lower: lower <<< Right $ MkFinite { bound: zero, openness: Open }
+          , upper: upper <<< Right $ MkPosInf
           }
         mkPair (Tuple base quote) = MkPair {base, quote}
 
 
-update :: forall a n. Ord a => Pair a -> (Interval n -> Interval n) -> UtilityFn a n -> UtilityFn a n
+update ::
+     forall a n. Ord a
+  => Pair a
+  -> (Interval.NonEmpty n -> Interval.NonEmpty n)
+  -> UtilityFn a n
+  -> UtilityFn a n
 update key f (MkUtilityFn m) = MkUtilityFn $ Map.update (Just <<< f) key m
 
 -- | Prune utility function so all remaining ratios involve chosen good
@@ -90,7 +95,7 @@ byGood ::
      Ord a
   => Ord n
   => UtilityFn a n
-  -> Map a (Set (Ratio a (Interval n)))
+  -> Map a (Set (Ratio a (Interval.NonEmpty n)))
 byGood (MkUtilityFn m) = Map.fromFoldableWith (<>) do
   Tuple (pair@MkPair {quote, base}) relativeValue <- Map.toUnfoldable $ m
   let ratio = MkRatio { pair, relativeValue }
@@ -109,13 +114,13 @@ best =
         unsafeCrashWith "There should only ever be one 'best' good"
       | otherwise = _ . key <$> Map.findMin m
 
-better :: forall a n. Ord n => Semiring n => Ratio a (Interval n) -> Maybe a
+better :: forall a n. Ord n => Semiring n => Ratio a (Interval.NonEmpty n) -> Maybe a
 better (MkRatio { pair: (MkPair { base, quote }), relativeValue })
   | relativeValue <=! Interval.singleton one = Just quote
   | relativeValue >=! Interval.singleton one = Just base
   | otherwise = Nothing
 
-worse :: forall a n. Ord n => Semiring n => Ratio a (Interval n) -> Maybe a
+worse :: forall a n. Ord n => Semiring n => Ratio a (Interval.NonEmpty n) -> Maybe a
 worse (MkRatio { pair: (MkPair { base, quote }), relativeValue })
   | relativeValue <=! Interval.singleton one = Just base
   | relativeValue >=! Interval.singleton one = Just quote
