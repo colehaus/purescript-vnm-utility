@@ -4,11 +4,10 @@ import Prelude hiding (bottom,top)
 
 import Data.Either (Either(..))
 import Data.Either.Nested (either3)
-import Data.Foldable (class Foldable, maximumBy)
+import Data.Foldable (class Foldable, all, maximumBy)
 import Data.Function (on)
 import Data.List (List)
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
 import Data.NonEmpty.Indexed as Indexed
 import Data.Tuple (Tuple(Tuple), snd)
 import Economics.Utility.Ratio (Ratio(MkRatio))
@@ -16,7 +15,7 @@ import Economics.Utility.VNM.Function (UtilityFn, unmake)
 import Economics.Utility.VNM.Function as Function
 import Economics.Utility.VNM.Helpers (unsafeFromJustBecause)
 import Math (sqrt)
-import Math.Interval (boundAbove, boundBelow, normalizedWidth)
+import Math.Interval (Infinite(..), boundAbove, boundBelow, forget, nonEmpty, normalizedWidth, width)
 import Math.Interval (singleton) as Interval
 import Math.Interval.Bound (Finite(MkFinite), Lower, Upper, lower, raw, upper)
 import Math.Interval.Internal (Interval(..))
@@ -38,7 +37,7 @@ geometricMean l r = sqrt l * sqrt r
 
 -- | Geometric mean of two numbers with some business logic for handling edge cases
 geometricMidpointish :: Lower Number -> Upper Number -> Number
-geometricMidpointish l u =
+geometricMidpointish lo hi =
   either3
     (\_ ->
        either3
@@ -49,7 +48,7 @@ geometricMidpointish l u =
               else geometricMean (-bound) (-bottom))
          (\_ -> 0.0) <<<
        raw $
-       u)
+       hi)
     (\lf ->
        either3
          absurd
@@ -59,10 +58,10 @@ geometricMidpointish l u =
               then 1.0
               else geometricMean lf.bound top) <<<
        raw $
-       u)
+       hi)
     absurd <<<
   raw $
-  l
+  lo
   where
     f (MkFinite {bound: 0.0, openness}) (MkFinite r) =
       geometricMidpointish
@@ -119,6 +118,14 @@ refine (MkRatio ratio) LT =
     (unsafeFromJustBecause "Midpoint guaranteed within interval" <<<
      (nonEmpty <=< boundAbove ratio . relativeValue Open))
 
-nonEmpty :: forall n. Interval n -> Maybe (Interval.NonEmpty n)
-nonEmpty (MkInterval (Right r)) = Just r
-nonEmpty _ = Nothing
+isComplete ::
+     forall a n. Ord a
+  => Eq n
+  => Ord n
+  => Semiring n
+  => Ring n
+  => UtilityFn a n -> Boolean
+isComplete =
+  all ((_ == Finite zero) <<< width <<< forget) <<<
+  Map.values <<< Indexed.fromNonEmpty Map.insert <<< unmake
+
