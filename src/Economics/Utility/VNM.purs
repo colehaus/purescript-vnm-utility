@@ -95,7 +95,7 @@ pickNextLottery fn =
       MkRatio { pair, relativeValue : geometricMidpointish lower upper }
  where
    asList :: forall b. List b -> List b
-   asList = id
+   asList = identity
 
 refine ::
      forall a n.

@@ -4,7 +4,6 @@ import Prelude
 
 import Data.Either (Either(Right, Left))
 import Data.Foldable (length)
-import Data.Generic (class Generic)
 import Data.List (List(..), (:))
 import Data.Map (Map)
 import Data.Map as Map
@@ -26,13 +25,13 @@ import Economics.Utility.VNM.Helpers (nonEmptyMap, pairCombos, unsafeFromJustBec
 
 
 newtype UtilityFn a n = MkUtilityFn (Map (Pair a) (Interval.NonEmpty n))
-derive newtype instance showUtilityFn :: (Generic a, Generic n) => Show (UtilityFn a n)
+derive newtype instance showUtilityFn :: (Show a, Show n) => Show (UtilityFn a n)
 
 
 goods :: forall a n. Ord a => UtilityFn a n -> Set a
 goods (MkUtilityFn fn) =
   Set.fromFoldable <<<
-  (_ >>= \(MkPair {quote, base}) -> quote : base : Nil) <<< Map.keys $
+  (_ >>= \(MkPair {quote, base}) -> quote : base : Nil) <<< Set.toUnfoldable <<< Map.keys $
   fn
 
 pairs :: forall a n. Ord a => UtilityFn a n -> Set (Pair a)
@@ -106,7 +105,7 @@ best :: forall a n. Ord a => Ord n => Semiring n => UtilityFn a n -> Maybe a
 best =
   extractOnly <<<
   Map.filter (_ == Set.singleton true) <<<
-  Map.mapWithKey (\good ratios -> Set.map ((_ == Just good) <<< better) ratios) <<<
+  Map.mapMaybeWithKey (\good ratios -> Just $ Set.map ((_ == Just good) <<< better) ratios) <<<
   byGood
   where
     extractOnly m

@@ -9,13 +9,14 @@
     "result"
   ],
   "dependencies": {
-    "purescript-indexed-nonempty": "^0.1.0",
-    "purescript-intervals": "^3.2.0",
-    "purescript-prelude": "^3.3.0",
-    "purescript-sets": "^3.2.0"
+    "purescript-indexed-nonempty": "^1.0.0",
+    "purescript-intervals": "^4.0.0",
+    "purescript-math": "^2.1.1",
+    "purescript-ordered-collections": "^1.4.0",
+    "purescript-prelude": "^4.1.0"
   },
   "devDependencies": {
-    "purescript-psci-support": "^3.0.0"
+    "purescript-psci-support": "^4.0.0"
   },
   "repository": {
       "type": "git",
